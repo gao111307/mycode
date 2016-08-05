@@ -1,0 +1,717 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>连连看</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+		<style>
+			#lianliankan{position:absolute;top:40px;left:15px;border:solid 1px red;text-align:center;}
+			#lianliankan td.cell{margin:0px;text-align:center;vertical-align:middle;cursor:pointer;font-size:25px;}
+			#lianliankan table{}
+			#lianliankan div.successMsg{height:200px;text-align:center;vertical-align:middle;font-size:50px;color:red;font-weight:bold;}
+			#c{margin-right:15px;color:#f8f8f8;}
+			#t{margin-left:15px;color:red;}
+		</style>
+		
+		<script language="javascript">
+			//待解决问题：
+			//连接判断还有“盲点”，似乎就是“直角连”的时候，因为看起来没有“间隙”，所以判断失误——ok了
+			//不能连接之后的“重整”，以及怎么判断“不能连接了”。难道要“遍历所有可能？那效率恐怕太低
+			//一个未知bug：提前结束——ok了
+			var arrText = [];
+var arrText5 = [
+"上","下","左","右","人","口","手","足","书","喝","家","水"
+,"坐","看","走","少","爸","爷","牛","站","头","马","叶","天"
+,"一","二","三","四","五","六","七","八","九","十","灯","云"
+,"奶","后","多","毛","他","妈","皮","星","牙","耳","白","中"
+,"跳","飞","里","叫","不","出","月","羊","鱼","给","说","树"];
+var arrText6 = ["山","光","小","完","大","前","吹","老","爱","在","多","玩","起","这","话","花","风","泪","唱","眼"];
+var arrText7 = ["高","你","笑","好","我","宝","只","汽","吃","跑","早","雨","拉","百","千","万","那","目","个","果"];
+var arrText8 = ["机","外","女","男","哥","雪","猪","雨","米","学","画","立","弟","沙","发","声","电","虫","瓜","拍"];
+var arrText9 = ["细","音","掉","们","读","东","南","西","北","幼","草","鸟","安","兽","想","冬","夏","药","茶","春"];
+var arrText10 = ["秋","入","公","朋","友","雷","美"];
+
+			var zuobiao = [];
+			var lianliankan;
+			var tableGrid;
+			var clock;
+			var timer;
+			var beginTime;
+			var cellWidth = 55;		//单元格宽高，通常相同
+			var cellHeight = 55;
+			var cellSpacing = 10;
+			var cellLevel = 6;
+			var cellXCount = 1;
+			var cellYCount = 1;
+			window.onload = function(){
+			
+				lianliankan = document.getElementById("lianliankan");
+				clock = document.getElementById("t");
+				startGame(cellLevel);
+			}
+			
+			function startGame(level)
+			{
+				linkedCellCount = 0;	//初始化消掉的个数
+				arrText = [];
+				zuobiao = [];
+				clock.innerHTML = "1000"
+				beginTime = new Date();
+				timer = setTimeout("servivalTime()",1000);
+				
+				if(level)
+				{
+					cellLevel = parseInt(level);
+				}
+				
+				for(var i = 5; i <= cellLevel; i++)
+				{
+					arrText = eval("arrText.concat(arrText" + i + ")");
+				}
+				
+				if(cellLevel % 2 == 0)
+				{
+					cellXCount = cellLevel;
+					cellYCount = cellLevel;
+				}
+				else
+				{
+					cellXCount = cellLevel + 1;
+					cellYCount = cellLevel - 1;
+				}
+				lianliankan.style.width = (cellHeight + cellSpacing) * cellXCount + "px"
+				tableGrid = document.createElement("table");
+				tableGrid.style.width = lianliankan.style.width;
+				tableGrid.cellPadding = 0;
+				tableGrid.cellSpacing = cellSpacing;
+				tableGrid.border = 10;
+				createTable(tableGrid)
+				for(var i = 0; i < cellXCount * cellYCount/2; i++)
+				{
+					var strWord = getRandomWord(arrText);
+					if(i % 1 == 0)
+					{
+					putWord(tableGrid,strWord);//将2个相同文字放入表格中：
+					putWord(tableGrid,strWord);
+					}
+				}
+				//alert(zuobiao.length);	//文字放完后数组zuobiao的长度就为0了
+				
+			}
+			
+			function servivalTime()
+			{
+				var d2 = new Date();
+				var sc = 1000 - parseInt((d2 - beginTime)/1000)
+				clock.innerHTML = sc;
+				setTimeout("servivalTime()",1000);
+			}
+			
+			//将文字放入表格中：
+			function putWord(tableGrid,strWord)
+			{
+				var zuobiao_length = zuobiao.length;
+				var xy = Math.floor(Math.random()*(zuobiao_length));
+				var x = parseInt(zuobiao[xy].split(",")[0]);
+				var y = parseInt(zuobiao[xy].split(",")[1]);
+				tableGrid.rows[x].cells[y].innerHTML = strWord;
+				tableGrid.rows[x].cells[y].Data.isFull = true;
+				tableGrid.rows[x].cells[y].Data.word = strWord;
+				zuobiao.splice(xy,1);
+			}
+			
+			//获得随机文字
+			//参数：文字数组
+			function getRandomWord(arrText)
+			{
+				var m = arrText.length;
+				var n = Math.floor(Math.random()*(m));
+				return arrText[n];
+			}
+			
+			//创建表格并加入到框中
+			function createTable(tb)
+			{
+				var row1, cell1;
+				var n = 0;
+				var strWord = "";
+				for(var i = 0; i < cellYCount; i++)
+				{
+					row1 = tb.insertRow(i);
+					for(var j = 0; j < cellXCount; j++)
+					{
+						cell1 = row1.insertCell(j);
+						cell1.style.height = cellHeight + "px";
+						cell1.style.width = cellWidth + "px";
+						cell1.innerHTML = i + "," + j;
+						cell1.innerHTML = strWord;
+						zuobiao.push(i + "," + j);		//坐标数组
+						cell1.className = "cell";
+						cell1.Data = new cellData();
+						cell1.Data.text = i + "," + j;	//坐标
+						cell1.Data.isFull = false;
+						cell1.Data.isChecked = false;
+						cell1.Data.word = strWord;
+						cell1.Data.x = i;
+						cell1.Data.y = j;
+						cell1.onclick = clickCell;
+						cell1.onmouseover = overCell;
+						cell1.onmouseout = outCell;
+					}
+				}
+				lianliankan.innerHTML = "";
+				lianliankan.appendChild(tb);
+			}
+			function overCell()
+			{
+				if(this.Data.word != "")
+				{
+					this.style.backgroundColor = "yellow";
+				}
+			}
+			function outCell()
+			{
+				if(this.Data.word != "")
+				{
+					if(this !== selectCell1)
+						this.style.backgroundColor = "";
+				}
+			}
+			var selected1 = false;
+			var selectCell1 = null;
+			var selected2 = false;
+			var selectCell2 = null;
+			var linkedCellCount = 0;
+			//点击单元格的时候调用的函数，开始处理“相连”问题
+			function clickCell()
+			{
+				//alert(this.parentNode.parentNode.tagName);
+				//alert(this.Data.text + ",isFull=" + this.Data.isFull);	//this指调用该方法的对象
+				//initTableChecked(this.parentNode.parentNode);	//初始化所有单元格
+				
+				var strCurWord = this.Data.word;	//this指单元格（td）
+				
+				if(this.Data.word == "")	//无字的单元格，忽略其点击
+				{
+					return;
+				}
+				var strColor1 = Math.floor(Math.random()*9+1);
+				var strColor2 = Math.floor(Math.random()*9+1);
+				var strColor3 = Math.floor(Math.random()*9+1);
+				var strColor = "#" + strColor1 + strColor1 + strColor2 + strColor2 + strColor3 + strColor3
+				//findAllWord(this,strCurWord,strColor);	//just for test测试从一个cell遍历所有cell，并以一个随机色标识所有当前点击的字
+				
+				this.style.backgroundColor = "yellow";
+				if(selected1 == false)
+				{
+					selected1 = true;
+					selectCell1 = this;
+				}
+				else
+				{
+						if(selectCell1 === this)
+						{
+							//点的是当前已经选中的单元格，则什么也不做
+						}
+						else if(is2CellsLinked(selectCell1,this))	//可连接
+						{
+							selectCell1.style.backgroundColor = "";
+							selectCell1.Data.isFull = false;
+							selectCell1.Data.word = "";
+							selectCell1.innerHTML = ""
+							this.style.backgroundColor = "";
+							this.Data.isFull = false;
+							this.Data.word = "";
+							this.innerHTML = ""
+							selected1 = false;
+							linkedCellCount += 2;
+							if(linkedCellCount == cellXCount * cellYCount)
+							{
+								lianliankan.innerHTML = "<div class='successMsg'><br/>真 棒";
+								lianliankan.innerHTML +="<br/><br/><br/><br/><input type='button' value='再来一次' onclick='startGame()' /><br/><br/></div>";
+								clearTimeout(timer);
+							}
+						}
+						else
+						{
+							selectCell1.style.backgroundColor = "";
+							selectCell1 = this;
+							selected1 = true;
+						}
+				}
+				//每次点击完成，要计算是否还有可链接的字。如果没有，则需要“重置”
+				if(hasLinkedCell() == false && linkedCellCount != cellXCount * cellYCount)
+				{
+					//alert("没有可连接的了，将重新排列单元格。");
+					resetCellWord();
+				}
+			}
+			
+			//遍历每个cell，跟其他所有cell是否可连接，如果可连接，则返回true，否则最后返回false，表示没有可连接的了：
+			function hasLinkedCell()
+			{
+				var count = 0;
+				var objC = document.getElementById("c");
+				for(var i = 0; i < tableGrid.rows.length; i++)
+				{
+					for(var j = 0; j < tableGrid.rows[i].cells.length; j++)
+					{
+						var cell1 = tableGrid.rows[i].cells[j];
+						if(cell1.Data.word == "") continue;
+						for(var m = 0; m < tableGrid.rows.length; m++)
+						{
+							for(var n = 0; n < tableGrid.rows[m].cells.length; n++)
+							{
+								var cell2 = tableGrid.rows[m].cells[n];
+								if(cell2.Data.word == "") continue;
+								if(cell1 !== cell2)
+								{
+									count++;
+									objC.innerHTML = count;
+									if(is2CellsLinked(cell1,cell2))
+									{
+										return true;
+									}
+									
+								}
+							}
+						}
+					}
+				}
+				return false;	//遍历结束，也没有找到相连的，就表示没有可连的了
+			}
+			
+			//判断是否连接，分3种情况：
+			//1：边连：两个cell到某一边均空，则为边连
+			//2：直连：两个cell在一条线上且中间无阻挡，则为直连
+			//3：折连：两个cell可通过无阻挡的空隙经由最多2个拐点进行连接
+			function is2CellsLinked(cell1,cell2)
+			{
+				if(cell1 === cell2) return false;
+				if(cell1.Data.word != cell2.Data.word)	//如文字的不同，则肯定不连
+				{
+					return false;
+				}
+				if(isSideLinked(cell1,cell2))
+				{
+					return true;
+				}
+				else if(isDirectLinked(cell1,cell2))//直连其实是“折连”的一种特例，此一逻辑可以删除，但似乎留着可以提高效率，即先简单判断是否可以“直连”
+				{
+					return true;
+				}
+				else if(isZigzagLinked(cell1,cell2))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			
+			//判断是否为“折连”，比较复杂！
+			function isZigzagLinked(cell1,cell2)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var x2 = cell2.Data.x;
+				var y2 = cell2.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				
+				//先考虑纵向切割线的情况：（用一根从同“上”点齐平的点到“下”点齐平的点的连线连接，
+				//如果可“直连”，再判断此两点是否分别跟所在齐平点直连，如果均可直连，则表示此两点可连。
+				//这样的纵向切割线从左到右挨个判断，发现有一次可连即可。）原理如下图所示，横线纵线表示可连
+				//%!$ ------牛				@$@马----- @#$%@^#$
+				//@$ | #@$%$&*%@%		或	@#$^@@$@ | ^%@^@$@@%
+				//@  | @#$^#$#@#^&^			@#$@@#$@ | @#$%@
+				//$%# ---------牛			@#$@#$#@ -----马@#$@
+					
+				//return isZigzagLinkedHeng(cell1,cell2)
+				for(var i = 0; i < tb.rows.length; i++)				//尝试纵向连
+				{
+					var p1 = tb.rows[i].cells[y1];
+					var p2 = tb.rows[i].cells[y2];
+					if(p1.Data.word != "" && p1.Data.word != cell1.Data.word || p2.Data.word != "" && p2.Data.word != cell2.Data.word)	//两个点上有字，则此路不通
+					{
+						continue;
+					}
+					if(!isDirectLinked(p1,p2))	continue;			//此两点不可连，下一判断
+					if(!isDirectLinked(p1,cell1))	continue;		//x1线上两点不可连，下一判断
+					if(!isDirectLinked(p2,cell2))	continue;		//x2线上两点不可连，下一判断
+					return true;									//3种情况下都可连，则可连
+				}
+				for(var i = 0; i < tb.rows[0].cells.length; i++)	//尝试横向连
+				{
+					var p1 = tb.rows[x1].cells[i];
+					var p2 = tb.rows[x2].cells[i];
+					if(p1.Data.word != "" || p2.Data.word != "")	//两个点上有字，则此路不通
+					{
+						continue;
+					}
+					if(!isDirectLinked(p1,p2))	continue;			//此两点不可连，下一判断
+					if(!isDirectLinked(p1,cell1))	continue;		//x1线上两点不可连，下一判断
+					if(!isDirectLinked(p2,cell2))	continue;		//x2线上两点不可连，下一判断
+					return true;									//3种情况下都可连，则可连
+				}
+				return false;
+			}
+			
+			//判断是否直连（在一条纵向或横向的直线上且没有阻挡）
+			function isDirectLinked(cell1,cell2)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var x2 = cell2.Data.x;
+				var y2 = cell2.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				
+				if(x1 == x2)	//横向一线
+				{
+					for(var y = y1+1; y < y2; y++)	//y2大于y1的情形
+					{
+						if(tb.rows[x1].cells[y].Data.word != "")
+						{
+							return false;
+						}
+					}
+					for(var y = y2+1; y < y1; y++)	//y1大于y2的情形
+					{
+						if(tb.rows[x1].cells[y].Data.word != "")
+						{
+							return false;
+						}
+					}
+					return true;
+				}
+				else if(y1 == y2)	//纵向一线
+				{
+					for(var x = x1+1; x < x2; x++)	//y2大于y1的情形
+					{
+						if(tb.rows[x].cells[y1].Data.word != "")
+						{
+							return false;
+						}
+					}
+					for(var x = x2+1; x < x1; x++)	//y1大于y2的情形
+					{
+						if(tb.rows[x].cells[y1].Data.word != "")
+						{
+							return false;
+						}
+					}
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			
+			
+			//判断是否边连（往东西南北任一同方向上，没有阻挡）
+			function isSideLinked(cell1,cell2)
+			{
+				//往东：
+				if(isDongKong(cell1) && isDongKong(cell2))		//2个节点往东“看”都是空的，则相连
+				{
+					return true;
+				}
+				else if(isNanKong(cell1) && isNanKong(cell2))	//2个节点往南“看”都是空的，则相连
+				{
+					return true;
+				}
+				else if(isXiKong(cell1) && isXiKong(cell2))		//2个节点往西“看”都是空的，则相连
+				{
+					return true;
+				}
+				else if(isBeiKong(cell1) && isBeiKong(cell2))	//2个节点往北“看”都是空的，则相连
+				{
+					return true;
+				}
+				else 
+				{
+					return false;
+				}
+			}
+			
+			function isDongKong(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				if(y1 == tb.rows[x1].cells.length-1)	//这表示该点就在东边上
+				{
+					return true;
+				}
+				for(var y = y1+1; y < tb.rows[x1].cells.length; y++)
+				{
+					if(tb.rows[x1].cells[y].Data.word != "")
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			function isNanKong(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				if(x1 == tb.rows.length - 1)	//这表示该点就在南边上
+				{
+					return true;
+				}
+				for(var x = x1+1; x < tb.rows.length; x++)
+				{
+					if(tb.rows[x].cells[y1].Data.word != "")
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			function isXiKong(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				if(y1 == 0)	//这表示该点就在西边上
+				{
+					return true;
+				}
+				for(var y = y1-1; y >=0; y--)
+				{
+					if(tb.rows[x1].cells[y].Data.word != "")
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			function isBeiKong(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				var tb = cell1.parentNode.parentNode;
+				if(x1 == 0)	//这表示该点就在北边上
+				{
+					return true;
+				}
+				for(var x = x1-1; x >= 0; x--)
+				{
+					if(tb.rows[x].cells[y1].Data.word != "")
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			
+			function judgeIsLinked(cell1,cell2)
+			{
+				
+				//从cell1开始遍历表格
+				if(cell1.Data.word == cell2.Data.word )
+				{
+					
+					cell1.style.backgroundColor = "yellow";
+					//return true;
+				}
+				else
+				{
+					var cellDong = getDongCell(cell1);
+					var cellNan = getNanCell(cell1);
+					var cellXi = getXiCell(cell1);
+					var cellBei = getBeiCell(cell1);
+					if(cellDong && judgeIsLinked(cellDong,cell2))
+					{
+						cellDong.style.backgroundColor = "yellow";
+					}
+					else if(cellNan && judgeIsLinked(cellNan,cell2))
+					{
+						cellNan.style.backgroundColor = "yellow";
+					}
+					else if(cellXi && judgeIsLinked(cellXi,cell2))
+					{
+						cellXi.style.backgroundColor = "yellow";
+					}
+					else if(cellXi && judgeIsLinked(cellBei,cell2))
+					{
+						cellBei.style.backgroundColor = "yellow";
+					}
+					else
+					{
+						return false
+					}
+				}
+			}
+			
+			function getDongCell(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				if(y1+1 < cellXCount)
+					if(cell1.parentNode.parentNode.rows[x1].cells[y1+1].Data.isChecked == false)
+					{
+						return cell1.parentNode.parentNode.rows[x1].cells[y1+1];
+					}
+					else
+					{
+						return null;
+					}
+				else
+					return null;
+			}
+			function getNanCell(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				if(x1+1 < cellYCount)
+				{
+					if(cell1.parentNode.parentNode.rows[x1+1].cells[y1].Data.isChecked == false)
+					{
+						return cell1.parentNode.parentNode.rows[x1+1].cells[y1];
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else
+					return null;
+			}
+			
+			function getXiCell(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				if(y1-1 >= 0)
+				{
+					if(cell1.parentNode.parentNode.rows[x1].cells[y1-1].Data.isChecked == false)
+					{
+						return cell1.parentNode.parentNode.rows[x1].cells[y1-1];
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else
+					return null;
+			}
+			function getBeiCell(cell1)
+			{
+				var x1 = cell1.Data.x;
+				var y1 = cell1.Data.y;
+				if(x1-1 >= 0)
+				{
+					if(cell1.parentNode.parentNode.rows[x1-1].cells[y1].Data.isChecked == false)
+					{
+						return cell1.parentNode.parentNode.rows[x1-1].cells[y1];
+					}
+					else
+					{
+						return null;
+					}
+				}
+				else
+					return null;
+			}
+			
+			var mmm = 0;	//just for test
+			function findAllWord(cellCur,strWord,strColor)
+			{
+					if(cellCur.Data.word == strWord)
+					{
+						cellCur.style.backgroundColor = strColor
+					}
+					else
+					{
+						cellCur.style.backgroundColor = "#f0f0f0";
+						//cellCur.innerHTML = mmm++;	//just for test
+					}
+					cellCur.Data.isChecked = true;
+					//alert("dd");
+					
+					var cellDong = getDongCell(cellCur);
+					var cellNan = getNanCell(cellCur);
+					var cellXi = getXiCell(cellCur);
+					var cellBei = getBeiCell(cellCur);
+					if(cellDong && cellDong.Data.isChecked == false){findAllWord(cellDong,strWord,strColor)}
+					if(cellNan && cellNan.Data.isChecked == false){findAllWord(cellNan,strWord,strColor)}
+					if(cellXi && cellXi.Data.isChecked == false){findAllWord(cellXi,strWord,strColor)}
+					if(cellBei && cellBei.Data.isChecked == false){findAllWord(cellBei,strWord,strColor)}
+			}
+			
+			function initTableChecked(tb)
+			{
+				for(var i = 0; i < tb.rows.length; i++)
+				{
+					for(var j = 0; j < tb.rows[i].cells.length; j++)
+					{
+						tb.rows[i].cells[j].Data.isChecked = false;
+						tb.rows[i].cells[j].style.backgroundColor = "";
+					}
+				}
+			}
+			
+			function cellData()
+			{
+				this.isFull = false;
+				this.isChecked = false;
+				this.text = "";
+				this.word = "";
+				this.x = -1;
+				this.y = -1;
+			}
+			
+			//如果现有文字再也不能连接了，就使用此函数“重整”。
+			function resetCellWord()
+			{
+				//首先遍历单元格，取出还没有消掉的字，放在数组leftWord里面去。
+				//然后消掉所有字；并取出坐标到数组 zuobiao
+				//最后随机放入所有单元格
+				
+				var leftWord = [];	//剩余文字;
+				zuobiao = [];		//坐标数组置空
+				for(var i = 0; i < tableGrid.rows.length; i++)
+				{
+					for(var j = 0; j < tableGrid.rows[i].cells.length; j++)
+					{
+						zuobiao.push(i + "," + j);
+						if(tableGrid.rows[i].cells[j].Data.word != "")
+						{
+							leftWord.push(tableGrid.rows[i].cells[j].Data.word);
+							tableGrid.rows[i].cells[j].Data.word = "";
+							tableGrid.rows[i].cells[j].innerHTML = "";
+						}
+					}
+				}
+				for(var i = 0; i < leftWord.length; i++)
+				{
+					putWord(tableGrid, leftWord[i]);
+				}
+				
+			}
+			
+		</script>
+	</head>
+
+	<body>
+		<input type="button" value="重来" onclick="startGame()" />
+		<select onchange="startGame(this.value)" >
+			<option value="" >级别</option>
+			<option value="5" >5</option>
+			<option value="6" >6</option>
+			<option value="7" >7</option>
+			<option value="8" >8</option>
+			<option value="9" >9</option>
+			<option value="10" >10</option>
+		</select>
+		<span id="c"></span>
+		<span id="t"></span>
+		<div>
+			<div id="lianliankan"></div>
+		</div>
+	</body>
+</html>
